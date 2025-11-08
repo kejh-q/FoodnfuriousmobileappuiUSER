@@ -40,27 +40,29 @@ export function BasketPage({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-white dark:bg-gray-900 pb-32 transition-colors duration-300"
+      className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300"
     >
       {/* Header */}
-      <div className="bg-[#FFD60A] dark:bg-yellow-600 px-6 pt-12 pb-6 transition-colors duration-300">
-        <div className="flex items-center gap-4 mb-4">
-          <button onClick={() => onNavigate("home")} className="text-gray-900 dark:text-white">
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-          <h1 className="text-gray-900 dark:text-white flex-1">Your Basket</h1>
-          <button 
-            onClick={() => onNavigate("order-history")}
-            className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-          >
-            <History className="w-5 h-5 text-gray-900 dark:text-white" />
-            <span className="text-gray-900 dark:text-white text-sm">Orders</span>
-          </button>
+      <div className="bg-[#FFD60A] dark:bg-yellow-600 shadow-md transition-colors duration-300">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="flex items-center gap-4">
+            <button onClick={() => onNavigate("home")} className="text-gray-900 dark:text-white hover:opacity-80 transition-opacity">
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <h1 className="text-gray-900 dark:text-white flex-1">Your Basket</h1>
+            <button 
+              onClick={() => onNavigate("order-history")}
+              className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <History className="w-5 h-5 text-gray-900 dark:text-white" />
+              <span className="text-gray-900 dark:text-white text-sm">Orders</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Cart Items */}
-      <div className="px-6 mt-6 pb-6">
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {cartItems.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-600 dark:text-gray-400 mb-4">Your basket is empty</p>
@@ -72,7 +74,7 @@ export function BasketPage({
             </Button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {cafes.map((cafe, cafeIndex) => {
               const cafeItems = itemsByCafe[cafe];
 
@@ -81,8 +83,8 @@ export function BasketPage({
                   key={cafe}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: cafeIndex * 0.1 }}
-                  className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 transition-colors duration-300"
+                  transition={{ delay: cafeIndex * 0.05 }}
+                  className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 transition-colors duration-300 h-fit"
                 >
                   {/* Cafe Header */}
                   <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-gray-200 dark:border-gray-700">
@@ -107,6 +109,11 @@ export function BasketPage({
                           </div>
                           <div className="flex-1 min-w-0">
                             <h3 className="text-gray-900 dark:text-white mb-1 truncate">{item.name}</h3>
+                            {item.notes && (
+                              <p className="text-gray-500 dark:text-gray-400 text-xs mb-1 italic">
+                                Note: {item.notes}
+                              </p>
+                            )}
                             <div className="flex items-center justify-between">
                               <span className="text-gray-900 dark:text-white">RM {item.price.toFixed(2)}</span>
                               <div className="flex items-center gap-2">

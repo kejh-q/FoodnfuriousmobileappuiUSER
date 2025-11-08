@@ -13,6 +13,7 @@ export interface User {
   createdAt: string;
   defaultLocation?: string;
   avatar?: string;
+  allergies?: string[];
 }
 
 export interface OrderItem {

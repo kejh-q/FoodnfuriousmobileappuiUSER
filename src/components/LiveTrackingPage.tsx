@@ -18,15 +18,39 @@ const mockDriver = {
   estimatedTime: 8,
 };
 
+// Mock vendor contact data - in a real app, this would come from a backend
+const vendorContacts: Record<string, { name: string; phone: string }> = {
+  "UM Central Café": { name: "Central Café", phone: "+60123456001" },
+  "Faculty of Engineering Cafeteria": { name: "Engineering Cafeteria", phone: "+60123456002" },
+  "KK12 Food Court": { name: "KK12 Food Court", phone: "+60123456003" },
+  "Asia Café": { name: "Asia Café", phone: "+60123456004" },
+};
+
 export function LiveTrackingPage({ onNavigate, checkoutData }: LiveTrackingPageProps) {
-  const handleCall = () => {
-    // Open phone dialer
+  const vendor = checkoutData?.cafe ? vendorContacts[checkoutData.cafe] : null;
+
+  const handleCallDriver = () => {
+    // Open phone dialer for driver
     window.location.href = `tel:${mockDriver.phone}`;
   };
 
-  const handleMessage = () => {
-    // Open SMS app
+  const handleMessageDriver = () => {
+    // Open SMS app for driver
     window.location.href = `sms:${mockDriver.phone}`;
+  };
+
+  const handleCallVendor = () => {
+    // Open phone dialer for vendor
+    if (vendor) {
+      window.location.href = `tel:${vendor.phone}`;
+    }
+  };
+
+  const handleMessageVendor = () => {
+    // Open SMS app for vendor
+    if (vendor) {
+      window.location.href = `sms:${vendor.phone}`;
+    }
   };
 
   // Generate order summary text
@@ -116,25 +140,26 @@ export function LiveTrackingPage({ onNavigate, checkoutData }: LiveTrackingPageP
         </div>
 
         {/* Driver Info */}
-        <div className="bg-gray-50 dark:bg-gray-700 rounded-2xl p-4 mb-6 flex items-center gap-4 border border-gray-100 dark:border-gray-600">
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-2xl p-4 mb-4 flex items-center gap-4 border border-gray-100 dark:border-gray-600">
           <div className="w-14 h-14 bg-[#FFD60A] rounded-full flex items-center justify-center">
-            <span className="text-2xl">👤</span>
+            <span className="text-2xl">🏍️</span>
           </div>
           <div className="flex-1">
+            <p className="text-gray-500 dark:text-gray-400 text-xs mb-1">Driver</p>
             <h3 className="text-gray-900 dark:text-white mb-1">{mockDriver.name}</h3>
             <p className="text-gray-600 dark:text-gray-400 text-sm">⭐ {mockDriver.rating} • {mockDriver.vehicle}</p>
             <p className="text-gray-500 dark:text-gray-500 text-xs mt-1">{mockDriver.plateNumber}</p>
           </div>
           <div className="flex gap-2">
             <button 
-              onClick={handleCall}
+              onClick={handleCallDriver}
               className="w-12 h-12 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 dark:hover:bg-gray-600 active:scale-95 transition-all"
               aria-label="Call driver"
             >
               <Phone className="w-5 h-5 text-gray-900 dark:text-white" />
             </button>
             <button 
-              onClick={handleMessage}
+              onClick={handleMessageDriver}
               className="w-12 h-12 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 dark:hover:bg-gray-600 active:scale-95 transition-all"
               aria-label="Message driver"
             >
@@ -142,6 +167,38 @@ export function LiveTrackingPage({ onNavigate, checkoutData }: LiveTrackingPageP
             </button>
           </div>
         </div>
+
+        {/* Vendor Info */}
+        {vendor && (
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-2xl p-4 mb-6 flex items-center gap-4 border border-gray-100 dark:border-gray-600">
+            <div className="w-14 h-14 bg-orange-400 rounded-full flex items-center justify-center">
+              <span className="text-2xl">🏪</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-gray-500 dark:text-gray-400 text-xs mb-1">Vendor</p>
+              <h3 className="text-gray-900 dark:text-white mb-1">{vendor.name}</h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                {checkoutData?.cafe}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={handleCallVendor}
+                className="w-12 h-12 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 dark:hover:bg-gray-600 active:scale-95 transition-all"
+                aria-label="Call vendor"
+              >
+                <Phone className="w-5 h-5 text-gray-900 dark:text-white" />
+              </button>
+              <button 
+                onClick={handleMessageVendor}
+                className="w-12 h-12 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 dark:hover:bg-gray-600 active:scale-95 transition-all"
+                aria-label="Message vendor"
+              >
+                <MessageSquare className="w-5 h-5 text-gray-900 dark:text-white" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Order Summary */}
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mb-4">

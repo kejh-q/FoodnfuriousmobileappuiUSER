@@ -196,9 +196,9 @@ export default function App() {
   return (
     <NotificationProvider>
       <NotificationPopup />
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex items-center justify-center transition-colors duration-300">
-        {/* Mobile Container */}
-        <div className="w-full max-w-[430px] min-h-screen bg-white dark:bg-gray-900 shadow-2xl relative overflow-hidden">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 transition-colors duration-300">
+        {/* Web Container */}
+        <div className="w-full min-h-screen bg-white dark:bg-gray-900 relative">
         <AnimatePresence mode="wait">
           {currentPage === "login" && (
             <LoginPage key="login" onNavigate={handleNavigate} />

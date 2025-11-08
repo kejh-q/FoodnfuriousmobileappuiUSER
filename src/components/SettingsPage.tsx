@@ -23,9 +23,16 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleDeleteAccount = () => {
+    // Clear user data
+    localStorage.removeItem('um_eats_current_user');
+    
     showNotification("success", "Account deletion request submitted");
     setShowDeleteDialog(false);
-    setTimeout(() => onNavigate("login"), 2000);
+    
+    // Navigate to login after a short delay
+    setTimeout(() => {
+      onNavigate("login");
+    }, 1500);
   };
 
   return (
@@ -180,11 +187,17 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
               <p className="text-gray-900 dark:text-white">1.0.0</p>
             </div>
 
-            <button className="w-full p-4 text-left border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <button 
+              onClick={() => window.open('https://www.um.edu.my', '_blank')}
+              className="w-full p-4 text-left border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
               <p className="text-gray-900 dark:text-white">Terms of Service</p>
             </button>
 
-            <button className="w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <button 
+              onClick={() => window.open('https://www.um.edu.my', '_blank')}
+              className="w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
               <p className="text-gray-900 dark:text-white">Privacy Policy</p>
             </button>
           </div>

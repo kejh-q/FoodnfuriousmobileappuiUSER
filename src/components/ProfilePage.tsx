@@ -154,8 +154,22 @@ export function ProfilePage({ onNavigate, isDarkMode, toggleDarkMode }: ProfileP
               <div className="flex-1">
                 <p className="text-gray-900 mb-1">Email Verification Required</p>
                 <p className="text-gray-600 text-sm mb-3">
-                  Please verify your email to access all features. Check your inbox for the verification code.
+                  Please verify your email to unlock exclusive benefits:
                 </p>
+                <ul className="text-gray-600 text-sm space-y-1 mb-3 ml-2">
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#FFD60A] mt-0.5">✓</span>
+                    <span>Access to exclusive promo codes and discounts</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#FFD60A] mt-0.5">✓</span>
+                    <span>Priority customer support</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#FFD60A] mt-0.5">✓</span>
+                    <span>Special offers and early access to new features</span>
+                  </li>
+                </ul>
                 {!showVerification ? (
                   <Button
                     onClick={() => setShowVerification(true)}
@@ -316,13 +330,6 @@ export function ProfilePage({ onNavigate, isDarkMode, toggleDarkMode }: ProfileP
               className="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700"
             >
               <span className="text-gray-900 dark:text-white">My Addresses</span>
-              <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-            </button>
-            <button 
-              onClick={() => onNavigate("promo-codes")}
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700"
-            >
-              <span className="text-gray-900 dark:text-white">Promo Codes</span>
               <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500" />
             </button>
             <button 

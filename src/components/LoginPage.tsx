@@ -62,9 +62,9 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-white flex flex-col items-center justify-center p-6"
+      className="min-h-screen bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 flex flex-col items-center justify-center p-6"
     >
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-xl bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-12 border border-gray-100 dark:border-gray-800">
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}

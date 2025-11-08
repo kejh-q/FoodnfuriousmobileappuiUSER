@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { ArrowLeft, Eye, EyeOff, GraduationCap, Briefcase, Users } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, GraduationCap, Briefcase, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth, UserType } from "../hooks/useAuth";
 import { useNotification } from "../hooks/useNotification";
@@ -20,6 +20,8 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
     password: "",
     confirmPassword: "",
     userType: "UM Student" as UserType,
+    allergies: [] as string[],
+    otherAllergy: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -31,6 +33,17 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
     confirmPassword: "",
     userType: "",
   });
+
+  const presetAllergies = [
+    "Peanuts",
+    "Tree Nuts",
+    "Milk",
+    "Eggs",
+    "Shellfish",
+    "Fish",
+    "Soy",
+    "Wheat/Gluten",
+  ];
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -94,12 +107,19 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
 
     // If no errors, proceed to sign up
     if (Object.values(newErrors).every((error) => error === "")) {
+      // Combine preset allergies and other allergy
+      const allergies = [...formData.allergies];
+      if (formData.otherAllergy.trim()) {
+        allergies.push(formData.otherAllergy.trim());
+      }
+
       const result = signUp({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         password: formData.password,
         userType: formData.userType,
+        allergies: allergies.length > 0 ? allergies : undefined,
       });
 
       if (result.success) {
@@ -117,9 +137,9 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
             value: localStorage.getItem(firstLoginKey),
           });
           
-          // Show success message
+          // Show success message with verification benefits
           if (result.needsVerification) {
-            showNotification("success", `🎉 Welcome! Verification email sent to ${formData.email}`);
+            showNotification("success", `🎉 Welcome! Check your email for verification. Verify to unlock exclusive promo codes!`);
           } else {
             showNotification("success", "🎉 Welcome to Food n Furious!");
           }
@@ -143,8 +163,17 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
     }
   };
 
-  const handleChange = (field: keyof typeof formData, value: string) => {
+  const handleChange = (field: keyof typeof formData, value: string | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const toggleAllergy = (allergy: string) => {
+    setFormData((prev) => {
+      const allergies = prev.allergies.includes(allergy)
+        ? prev.allergies.filter((a) => a !== allergy)
+        : [...prev.allergies, allergy];
+      return { ...prev, allergies };
+    });
   };
 
   return (
@@ -152,26 +181,40 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-white"
+      className="min-h-screen bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-6"
     >
-      <div className="p-6">
-        <button
-          onClick={() => onNavigate("login")}
-          className="flex items-center gap-2 text-gray-600 mb-8"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back
-        </button>
+      <div className="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+        <div className="grid md:grid-cols-2">
+          {/* Left side - Branding */}
+          <div className="hidden md:flex flex-col items-center justify-center bg-[#FFD60A] dark:bg-yellow-600 p-12">
+            <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-900 flex items-center justify-center mb-6">
+              <GraduationCap className="w-12 h-12 text-[#FFD60A] dark:text-yellow-600" />
+            </div>
+            <h2 className="text-gray-900 dark:text-white mb-4 text-center">Join Food n Furious</h2>
+            <p className="text-gray-700 dark:text-gray-300 text-center">
+              Fast food delivery for the UM community
+            </p>
+          </div>
 
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <h1 className="text-gray-900 mb-2">Create Account</h1>
-          <p className="text-gray-600 mb-8">Join Food n Furious today</p>
+          {/* Right side - Form */}
+          <div className="p-8 md:p-12">
+            <button
+              onClick={() => onNavigate("login")}
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Back
+            </button>
 
-          <form onSubmit={handleSignUp} className="space-y-4">
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <h1 className="text-gray-900 dark:text-white mb-2">Create Account</h1>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">Get started with your account</p>
+
+              <form onSubmit={handleSignUp} className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
             <div>
               <Input
                 type="text"
@@ -287,6 +330,54 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
                 <p className="text-red-500 text-xs mt-1 ml-2">{errors.phone}</p>
               )}
             </div>
+
+            {/* Food Allergies Section */}
+            <div>
+              <p className="text-gray-700 dark:text-gray-300 mb-3">Food Allergies (Optional)</p>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {presetAllergies.map((allergy) => (
+                  <button
+                    key={allergy}
+                    type="button"
+                    onClick={() => toggleAllergy(allergy)}
+                    className={`p-3 rounded-lg border-2 transition-all text-sm ${
+                      formData.allergies.includes(allergy)
+                        ? "border-[#FFD60A] bg-[#FFF9E6] dark:bg-yellow-900/20 text-gray-900 dark:text-white"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    {allergy}
+                  </button>
+                ))}
+              </div>
+              <Input
+                type="text"
+                placeholder="Other allergies (separate with comma)"
+                value={formData.otherAllergy}
+                onChange={(e) => handleChange("otherAllergy", e.target.value)}
+                className="h-12 px-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 focus:border-[#FFD60A]"
+              />
+              {(formData.allergies.length > 0 || formData.otherAllergy) && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {formData.allergies.map((allergy) => (
+                    <span
+                      key={allergy}
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-gray-900 dark:text-white rounded-full text-xs"
+                    >
+                      {allergy}
+                      <button
+                        type="button"
+                        onClick={() => toggleAllergy(allergy)}
+                        className="hover:text-red-500"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div>
               <div className="relative">
                 <Input
@@ -343,24 +434,26 @@ export function SignUpPage({ onNavigate }: SignUpPageProps) {
                 </p>
               )}
             </div>
-            <Button
-              type="submit"
-              className="w-full h-14 bg-[#FFD60A] hover:bg-[#FFC700] text-gray-900 rounded-xl mt-6"
-            >
-              Sign Up
-            </Button>
-          </form>
+                <Button
+                  type="submit"
+                  className="w-full h-14 bg-[#FFD60A] dark:bg-yellow-600 hover:bg-[#FFC700] dark:hover:bg-yellow-700 text-gray-900 dark:text-white rounded-xl mt-6"
+                >
+                  Sign Up
+                </Button>
+              </form>
 
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => onNavigate("login")}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              Already have an account? <span className="text-[#FFD60A]">Login</span>
-            </button>
+              <div className="mt-6 text-center">
+                  <button
+                    onClick={() => onNavigate("login")}
+                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Already have an account? <span className="text-[#FFD60A] dark:text-yellow-600">Login</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
           </div>
-        </motion.div>
-      </div>
+        </div>
     </motion.div>
   );
 }

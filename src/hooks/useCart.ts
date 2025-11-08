@@ -46,17 +46,18 @@ export function useCart(userId?: string) {
 
   const addToCart = (item: Omit<CartItem, "quantity">, quantity: number = 1) => {
     setCartItems((prev) => {
-      const existingItem = prev.find((i) => i.id === item.id);
+      // Check if the same item with same notes exists
+      const existingItem = prev.find((i) => i.id === item.id && i.notes === item.notes);
       
       if (existingItem) {
-        // Update quantity if item already exists
+        // Update quantity if item with same notes already exists
         return prev.map((i) =>
-          i.id === item.id
+          i.id === item.id && i.notes === item.notes
             ? { ...i, quantity: i.quantity + quantity }
             : i
         );
       } else {
-        // Add new item
+        // Add new item (or same item with different notes)
         return [...prev, { ...item, quantity }];
       }
     });

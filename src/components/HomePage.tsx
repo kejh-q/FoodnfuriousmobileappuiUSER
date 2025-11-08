@@ -1,12 +1,12 @@
 import { motion, AnimatePresence } from "motion/react";
-import { Search, MapPin, MessageCircle, ShoppingCart, User, Send, Bell, Heart } from "lucide-react";
+import { Search, MapPin, MessageCircle, ShoppingCart, User, Send, Bell, Heart, UtensilsCrossed } from "lucide-react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { NotificationPopup } from "./NotificationPopup";
-import type { FavoriteCafe } from "../hooks/useFavorites";
+import type { FavoriteCafe, FavoriteItem } from "../hooks/useFavorites";
 
 interface HomePageProps {
   onNavigate: (page: string, cafeId?: number) => void;
@@ -14,7 +14,7 @@ interface HomePageProps {
   deliveryLocation: string;
   unreadNotifications?: number;
   isFavorite: (itemId: string | number, itemType: "item" | "cafe") => boolean;
-  addToFavorites: (item: FavoriteCafe) => void;
+  addToFavorites: (item: FavoriteCafe | FavoriteItem) => void;
   removeFromFavorites: (itemId: string | number, itemType: "item" | "cafe") => void;
 }
 
@@ -71,6 +71,41 @@ const cafes = [
   },
 ];
 
+interface FoodItem {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  cafeId: number;
+  cafeName: string;
+}
+
+// All food items from all cafes
+// IMPORTANT: IDs must match the item IDs in CafeMenuPage for favorites to work correctly
+const allFoodItems: FoodItem[] = [
+  // UM Central Café
+  { id: 1, name: "Nasi Lemak Special", description: "Coconut rice with fried chicken, sambal, and sides", price: 8.5, image: "https://images.unsplash.com/photo-1677921755291-c39158477b8e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuYXNpJTIwbGVtYWt8ZW58MXx8fHwxNzYyMjIwNzYxfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 1, cafeName: "UM Central Café" },
+  { id: 2, name: "Western Breakfast Set", description: "Scrambled eggs, toast, sausage, and hash brown", price: 9.5, image: "https://images.unsplash.com/photo-1609590981063-d495e2914ce4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWZlJTIwZm9vZHxlbnwxfHx8fDE3NjIyMTA4NTB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 1, cafeName: "UM Central Café" },
+  { id: 3, name: "Bubble Tea", description: "Classic milk tea with tapioca pearls", price: 6.0, image: "https://images.unsplash.com/photo-1558857563-b371033873b8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidWJibGUlMjB0ZWF8ZW58MXx8fHwxNzYyMjUyNDkyfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 1, cafeName: "UM Central Café" },
+  { id: 4, name: "Club Sandwich", description: "Triple-decker with chicken, bacon, and veggies", price: 10.0, image: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzYW5kd2ljaHxlbnwxfHx8fDE3NjI0NjUwMDB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 1, cafeName: "UM Central Café" },
+  // Faculty of Engineering Cafeteria
+  { id: 1, name: "Nasi Lemak Special", description: "Traditional coconut rice with all the fixings", price: 7.0, image: "https://images.unsplash.com/photo-1677921755291-c39158477b8e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuYXNpJTIwbGVtYWt8ZW58MXx8fHwxNzYyMjIwNzYxfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 2, cafeName: "Faculty of Engineering Cafeteria" },
+  { id: 2, name: "Mee Goreng", description: "Spicy fried noodles with vegetables and egg", price: 6.5, image: "https://images.unsplash.com/photo-1612874742237-6526221588e3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWUlMjBnb3Jlbmd8ZW58MXx8fHwxNzYyNDY1MDAwfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 2, cafeName: "Faculty of Engineering Cafeteria" },
+  { id: 3, name: "Roti Canai with Curry", description: "Crispy flatbread served with dhal curry", price: 5.0, image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyb3RpJTIwY2FuYWl8ZW58MXx8fHwxNzYyNDY1MDAwfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 2, cafeName: "Faculty of Engineering Cafeteria" },
+  { id: 4, name: "Nasi Goreng Kampung", description: "Village-style fried rice with anchovies", price: 6.0, image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmllZCUyMHJpY2V8ZW58MXx8fHwxNzYyNDY1MDAwfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 2, cafeName: "Faculty of Engineering Cafeteria" },
+  // KK12 Food Court
+  { id: 1, name: "Hainanese Chicken Rice", description: "Tender chicken with fragrant rice and chili sauce", price: 7.5, image: "https://images.unsplash.com/photo-1569058242252-623df46b5025?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjaGlja2VuJTIwcmljZXxlbnwxfHx8fDE3NjIyNzcyNTB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 3, cafeName: "KK12 Food Court" },
+  { id: 2, name: "Char Kuey Teow", description: "Wok-fried flat rice noodles with prawns and egg", price: 8.0, image: "https://images.unsplash.com/photo-1569562211093-4ed0d0758f12?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxub29kbGVzfGVufDF8fHx8MTc2MjQ2NTAwMHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 3, cafeName: "KK12 Food Court" },
+  { id: 3, name: "Laksa", description: "Spicy coconut curry noodle soup", price: 7.0, image: "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsYWtzYXxlbnwxfHx8fDE3NjI0NjUwMDB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 3, cafeName: "KK12 Food Court" },
+  { id: 4, name: "Satay Combo", description: "Grilled meat skewers with peanut sauce", price: 9.0, image: "https://images.unsplash.com/photo-1529543544-76e6f1a6f79c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzYXRheXxlbnwxfHx8fDE3NjI0NjUwMDB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 3, cafeName: "KK12 Food Court" },
+  // Asia Café
+  { id: 1, name: "Thai Basil Chicken", description: "Stir-fried chicken with holy basil and chilies", price: 8.5, image: "https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0aGFpJTIwZm9vZHxlbnwxfHx8fDE3NjI0NjUwMDB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 4, cafeName: "Asia Café" },
+  { id: 2, name: "Vietnamese Pho", description: "Beef noodle soup with fresh herbs", price: 9.0, image: "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsYWtzYXxlbnwxfHx8fDE3NjI0NjUwMDB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 4, cafeName: "Asia Café" },
+  { id: 3, name: "Korean Bibimbap", description: "Mixed rice bowl with vegetables and egg", price: 10.0, image: "https://images.unsplash.com/photo-1553163147-622ab57be1c7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiaWJpbWJhcHxlbnwxfHx8fDE3NjI0NjUwMDB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 4, cafeName: "Asia Café" },
+  { id: 4, name: "Japanese Ramen", description: "Rich pork broth with fresh noodles and toppings", price: 11.0, image: "https://images.unsplash.com/photo-1557872943-16a5ac26437e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyYW1lbnxlbnwxfHx8fDE3NjI0NjUwMDB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", cafeId: 4, cafeName: "Asia Café" },
+];
+
 interface Message {
   id: number;
   text: string;
@@ -118,6 +153,7 @@ export function HomePage({
     time: calculateDeliveryTime(distances[cafe.id] || 2.0),
   }));
 
+  // Filter cafes
   const filteredCafes = cafesWithTimes.filter(
     (cafe) => {
       const matchesSearch = 
@@ -130,6 +166,32 @@ export function HomePage({
     }
   );
 
+  // Filter food items
+  const filteredFoodItems = allFoodItems.filter((item) => {
+    // Generate a unique ID for the food item that matches the format used in CafeMenuPage
+    const itemId = `cafe-${item.cafeId}-item-${item.id}`;
+    
+    // When showing favorites only
+    if (showFavoritesOnly && !searchQuery) {
+      return isFavorite(itemId, "item");
+    }
+    
+    // When searching
+    if (searchQuery) {
+      const matchesSearch = 
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.cafeName.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesFavorite = showFavoritesOnly ? isFavorite(itemId, "item") : true;
+      
+      return matchesSearch && matchesFavorite;
+    }
+    
+    // Don't show food items by default (only when searching or showing favorites)
+    return false;
+  });
+
   const handleToggleFavorite = (e: React.MouseEvent, cafe: typeof cafesWithTimes[0]) => {
     e.stopPropagation();
     const isFav = isFavorite(cafe.id, "cafe");
@@ -139,6 +201,25 @@ export function HomePage({
       addToFavorites({
         ...cafe,
         favoriteType: "cafe",
+      });
+    }
+  };
+
+  const handleToggleFoodFavorite = (e: React.MouseEvent, item: FoodItem) => {
+    e.stopPropagation();
+    const itemId = `cafe-${item.cafeId}-item-${item.id}`;
+    const isFav = isFavorite(itemId, "item");
+    
+    if (isFav) {
+      removeFromFavorites(itemId, "item");
+    } else {
+      addToFavorites({
+        id: itemId,
+        name: item.name,
+        cafe: item.cafeName,
+        price: item.price,
+        image: item.image,
+        type: "item",
       });
     }
   };
@@ -229,70 +310,79 @@ export function HomePage({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-white dark:bg-gray-900 pb-20 transition-colors duration-300"
+      className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300"
     >
       {/* Notification Popup */}
       <NotificationPopup onNavigateToNotifications={() => onNavigate("notifications")} />
 
       {/* Header - Fixed */}
-      <div className="fixed top-0 left-0 right-0 z-30 bg-[#FFD60A] dark:bg-yellow-600 px-6 pt-12 pb-8 rounded-b-3xl shadow-md transition-colors duration-300">
-        <div className="flex items-center justify-between mb-6">
-          <button
-            onClick={() => onNavigate("location")}
-            className="flex-1"
-          >
-            <p className="text-gray-700 mb-1">Deliver to</p>
-            <div className="flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-gray-900" />
-              <span className="text-gray-900">{deliveryLocation}</span>
+      <div className="fixed top-0 left-0 right-0 z-30 bg-[#FFD60A] dark:bg-yellow-600 shadow-md transition-colors duration-300">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between gap-8">
+            {/* Logo and Location */}
+            <div className="flex items-center gap-8">
+              <h1 className="text-gray-900 dark:text-white whitespace-nowrap">Food n Furious</h1>
+              <button
+                onClick={() => onNavigate("location")}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              >
+                <MapPin className="w-5 h-5 text-gray-900 dark:text-white" />
+                <div className="text-left hidden md:block">
+                  <p className="text-xs text-gray-700 dark:text-gray-300">Deliver to</p>
+                  <p className="text-gray-900 dark:text-white">{deliveryLocation}</p>
+                </div>
+                <span className="md:hidden text-gray-900 dark:text-white">{deliveryLocation}</span>
+              </button>
             </div>
-          </button>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onNavigate("notifications")}
-              className="relative w-12 h-12 bg-white rounded-full flex items-center justify-center"
-            >
-              <Bell className="w-6 h-6 text-gray-900" />
-              {unreadNotifications > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs">
-                  {unreadNotifications}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => onNavigate("basket")}
-              className="relative w-12 h-12 bg-white rounded-full flex items-center justify-center"
-            >
-              <ShoppingCart className="w-6 h-6 text-gray-900" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs">
-                  {cartCount}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => onNavigate("profile")}
-              className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl"
-            >
-              {currentUser?.avatar || <User className="w-6 h-6 text-gray-900" />}
-            </button>
-          </div>
-        </div>
 
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-          <Input
-            placeholder="Search for food or cafés"
-            className="h-14 pl-12 pr-4 rounded-xl border-0 bg-white dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+            {/* Search Bar - Center */}
+            <div className="flex-1 max-w-2xl relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+              <Input
+                placeholder="Search for food or cafés"
+                className="h-12 pl-12 pr-4 rounded-xl border-0 bg-white dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400 w-full"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => onNavigate("notifications")}
+                className="relative w-10 h-10 hover:bg-white/20 dark:hover:bg-black/20 rounded-full flex items-center justify-center transition-colors"
+              >
+                <Bell className="w-5 h-5 text-gray-900 dark:text-white" />
+                {unreadNotifications > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs">
+                    {unreadNotifications}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => onNavigate("basket")}
+                className="relative w-10 h-10 hover:bg-white/20 dark:hover:bg-black/20 rounded-full flex items-center justify-center transition-colors"
+              >
+                <ShoppingCart className="w-5 h-5 text-gray-900 dark:text-white" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => onNavigate("profile")}
+                className="w-10 h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center hover:scale-105 transition-transform"
+              >
+                {currentUser?.avatar || <User className="w-5 h-5 text-gray-900 dark:text-white" />}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="px-6 pt-[200px] mt-6">
+      <div className="max-w-7xl mx-auto px-6 pt-24 pb-12">
         {/* Filter Header */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-gray-900 dark:text-white">
@@ -317,31 +407,92 @@ export function HomePage({
           </button>
         </div>
 
-        {filteredCafes.length === 0 ? (
+        {filteredCafes.length === 0 && filteredFoodItems.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-600 dark:text-gray-400 mb-2">
-              {showFavoritesOnly ? "No favourite cafés yet" : "No cafés found"}
+              {showFavoritesOnly ? "No favourites yet" : searchQuery ? "No results found" : "No cafés found"}
             </p>
             <p className="text-gray-500 dark:text-gray-500">
               {showFavoritesOnly 
-                ? "Add cafés to your favourites by tapping the heart icon" 
+                ? "Add cafés and food items to your favourites by clicking the heart icon" 
                 : "Try searching for something else"}
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredCafes.map((cafe, index) => (
+          <div className="space-y-8">
+            {/* Food Items Search Results */}
+            {filteredFoodItems.length > 0 && (
+              <div>
+                <h3 className="text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <UtensilsCrossed className="w-5 h-5" />
+                  Food Items ({filteredFoodItems.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredFoodItems.map((item, index) => (
+                    <motion.div
+                      key={`food-${item.cafeId}-${item.id}`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-100 dark:border-gray-700 hover:border-[#FFD60A] dark:hover:border-yellow-600 overflow-hidden transition-all hover:shadow-lg relative"
+                    >
+                      <div 
+                        onClick={() => onNavigate("menu", item.cafeId)}
+                        className="flex gap-3 p-3 cursor-pointer"
+                      >
+                        <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
+                          <ImageWithFallback
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 className="text-gray-900 dark:text-white mb-1 line-clamp-1 flex-1">{item.name}</h4>
+                            <button
+                              onClick={(e) => handleToggleFoodFavorite(e, item)}
+                              className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            >
+                              <Heart
+                                className={`w-4 h-4 ${
+                                  isFavorite(`cafe-${item.cafeId}-item-${item.id}`, "item")
+                                    ? "fill-red-500 text-red-500"
+                                    : "text-gray-400"
+                                }`}
+                              />
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{item.cafeName}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">{item.description}</p>
+                          <p className="text-gray-900 dark:text-white">RM {item.price.toFixed(2)}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Cafés */}
+            {filteredCafes.length > 0 && (
+              <div>
+                {filteredFoodItems.length > 0 && (
+                  <h3 className="text-gray-900 dark:text-white mb-4">Cafés ({filteredCafes.length})</h3>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {filteredCafes.map((cafe, index) => (
               <motion.div
                 key={cafe.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: index * 0.05 }}
               >
                 <div
                   onClick={() => onNavigate("menu", cafe.id)}
-                  className="w-full bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border-2 border-gray-100 dark:border-gray-700 hover:border-[#FFD60A] dark:hover:border-yellow-600 transition-all cursor-pointer"
+                  className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border-2 border-gray-100 dark:border-gray-700 hover:border-[#FFD60A] dark:hover:border-yellow-600 hover:shadow-lg transition-all cursor-pointer h-full"
                 >
-                  <div className="relative h-40">
+                  <div className="relative h-48">
                     <ImageWithFallback
                       src={cafe.image}
                       alt={cafe.name}
@@ -372,8 +523,11 @@ export function HomePage({
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            ))}
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+            )}
           </div>
         )}
       </div>
@@ -384,7 +538,7 @@ export function HomePage({
         animate={{ scale: 1 }}
         transition={{ delay: 0.5, type: "spring" }}
         onClick={() => setShowChatbot(!showChatbot)}
-        className="fixed bottom-6 right-6 w-16 h-16 bg-[#FFD60A] dark:bg-yellow-600 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all z-50"
+        className="fixed bottom-8 right-8 w-16 h-16 bg-[#FFD60A] dark:bg-yellow-600 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all z-50"
       >
         <MessageCircle className="w-7 h-7 text-gray-900 dark:text-white" />
       </motion.button>
@@ -396,7 +550,7 @@ export function HomePage({
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
-            className="fixed bottom-24 right-6 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border-2 border-gray-100 dark:border-gray-700 overflow-hidden z-40 transition-colors duration-300"
+            className="fixed bottom-28 right-8 w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border-2 border-gray-100 dark:border-gray-700 overflow-hidden z-40 transition-colors duration-300"
           >
             <div className="bg-[#FFD60A] dark:bg-yellow-600 p-4 transition-colors duration-300">
               <div className="flex items-center justify-between">
